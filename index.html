@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Albizia Entretien - Version Stable</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .hidden { display: none; }
+        @media print {
+            body * { visibility: hidden; }
+            .print-area, .print-area * { visibility: visible; }
+            .print-area { position: absolute; left: 0; top: 0; }
+            .no-print { display: none !important; }
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+
+    <!-- En-tête -->
+    <div class="bg-green-600 text-white p-6 no-print">
+        <h1 class="text-2xl font-bold text-center">Albizia Entretien Pro</h1>
+        <div class="text-center mt-4">
+            <button onclick="section = 'nouvelle'; afficher()" class="mx-2 px-4 py-2 bg-white text-green-600 rounded">
+                Nouvelle Fiche
+            </button>
+            <button onclick="section = 'clients'; afficher()" class="mx-2 px-4 py-2 bg-green-700 text-white rounded">
+                Dossier Clients (<span id="count">0</span>)
+            </button>
+        </div>
+    </div>
+
+    <div class="container mx-auto p-4 max-w-5xl">
+
+        <!-- PAGE NOUVELLE FICHE -->
+        <div id="page-nouvelle">
+            
+            <!-- Infos Client -->
+            <div class="bg-white rounded-lg shadow p-6 mb-6">
+                <h2 class="text-xl font-bold mb-4">Informations Client</h2>
+                <div class="grid md:grid-cols-2 gap-4 mb-4">
+                    <input type="text" id="nom" placeholder="Nom du client *" class="p-3 border rounded">
+                    <input type="tel" id="tel" placeholder="Téléphone" class="p-3 border rounded">
+                    <input type="email" id="email" placeholder="Email" class="p-3 border rounded">
+                    <input type="date" id="date" class="p-3 border rounded">
+                </div>
+                <textarea id="adresse" placeholder="Adresse complète" class="w-full p-3 border rounded h-16"></textarea>
+            </div>
+
+            <!-- Services Rapides -->
+            <div class="bg-white rounded-lg shadow p-6 mb-6">
+                <h2 class="text-xl font-bold mb-4">Ajouter Services</h2>
+                
+                <!-- Formulaire unique -->
+                <div class="grid grid-cols-6 gap-2 mb-4">
+                    <select id="mat-nom" class="p-3 border rounded col-span-2">
+                        <option value="">Choisir service</option>
+                        <option value="Tonte Gazon">Tonte Gazon</option>
+                        <option value="Débrousaillage">Débrousaillage</option>
+                        <option value="Taille">Taille</option>
+                        <option value="Désherbant">Désherbant</option>
+                        <option value="Gyrobroyage">Gyrobroyage</option>
+                        <option value="Elaguage">Elaguage</option>
+                        <option value="Nettoyage massifs">Nettoyage massifs</option>
+                        <option value="AUTRE">Autre service...</option>
+                    </select>
+                    <input type="text" id="mat-autre" placeholder="Nom si autre" class="p-3 border rounded hidden">
+                    <input type="number" step="0.01" id="mat-qte" placeholder="Quantité" class="p-3 border rounded">
+                    <select id="mat-unite" class="p-3 border rounded">
+                        <option value="passage">passage</option>
+                        <option value="heure">heure</option>
+                        <option value="euro HT">euro HT</option>
+                        <option value="forfait">forfait</option>
+                        <option value="unité">unité</option>
+                    </select>
+                    <input type="text" id="mat-note" placeholder="Notes" class="p-3 border rounded">
+                    <button onclick="ajouterMat()" class="bg-green-600 text-white rounded hover:bg-green-700">Ajouter</button>
+                </div>
+            </div>
+
+            <!-- Liste Services -->
+            <div class="bg-white rounded-lg shadow p-6 mb-6">
+                <h3 class="text-lg font-bold mb-3">Services ajoutés</h3>
+                <div id="liste-mat">
+                    <p class="text-gray-500">Aucun service ajouté</p>
+                </div>
+                <div class="mt-6 text-center">
+                    <button onclick="sauver()" class="bg-blue-600 text-white px-8 py-4 rounded-lg text-xl font-bold hover:bg-blue-700">
+                        Enregistrer Client
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- PAGE CLIENTS -->
+        <div id="page-clients" class="hidden">
+            <h2 class="text-2xl font-bold mb-6">Dossier Clients</h2>
+            <div id="liste-clients"></div>
+        </div>
+
+        <!-- PAGE MODIFICATION CLIENT -->
+        <div id="page-modification" class="hidden">
+            <div class="mb-4">
+                <button onclick="section = 'clients'; afficher()" class="bg-gray-600 text-white px-4 py-2 rounded">Retour aux Clients</button>
+            </div>
+            
+            <h2 class="text-2xl font-bold mb-6">Modifier Client: <span id="client-nom-modif"></span></h2>
+            
+            <!-- Ajouter services -->
+            <div class="bg-white rounded-lg shadow p-6 mb-6">
+                <h3 class="text-xl font-bold mb-4">Ajouter des services</h3>
+                
+                <div class="grid grid-cols-6 gap-2 mb-4">
+                    <select id="modif-mat-nom" class="p-3 border rounded col-span-2">
+                        <option value="">Choisir service</option>
+                        <option value="Tonte Gazon">Tonte Gazon</option>
+                        <option value="Débrousaillage">Débrousaillage</option>
+                        <option value="Taille">Taille</option>
+                        <option value="Désherbant">Désherbant</option>
+                        <option value="Gyrobroyage">Gyrobroyage</option>
+                        <option value="Elaguage">Elaguage</option>
+                        <option value="Nettoyage massifs">Nettoyage massifs</option>
+                        <option value="AUTRE">Autre service...</option>
+                    </select>
+                    <input type="text" id="modif-mat-autre" placeholder="Nom si autre" class="p-3 border rounded hidden">
+                    <input type="number" step="0.01" id="modif-mat-qte" placeholder="Quantité" class="p-3 border rounded">
+                    <select id="modif-mat-unite" class="p-3 border rounded">
+                        <option value="passage">passage</option>
+                        <option value="heure">heure</option>
+                        <option value="euro HT">euro HT</option>
+                        <option value="forfait">forfait</option>
+                        <option value="unité">unité</option>
+                    </select>
+                    <input type="text" id="modif-mat-note" placeholder="Notes" class="p-3 border rounded">
+                    <button onclick="ajouterMatModif()" class="bg-green-600 text-white rounded hover:bg-green-700">Ajouter</button>
+                </div>
+            </div>
+            
+            <!-- Liste services du client -->
+            <div class="bg-white rounded-lg shadow p-6 mb-6">
+                <h3 class="text-lg font-bold mb-3">Services du client</h3>
+                <div id="liste-mat-modif">
+                </div>
+                <div class="mt-6 text-center">
+                    <button onclick="sauverModifications()" class="bg-blue-600 text-white px-8 py-4 rounded-lg text-xl font-bold hover:bg-blue-700">
+                        Sauvegarder les Modifications
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div id="page-detail" class="hidden">
+            <div class="no-print mb-4">
+                <button onclick="section = 'clients'; afficher()" class="bg-gray-600 text-white px-4 py-2 rounded mr-2">Retour</button>
+                <button onclick="window.print()" class="bg-green-600 text-white px-4 py-2 rounded">Imprimer</button>
+            </div>
+            <div class="print-area bg-white rounded-lg shadow p-8" id="detail-contenu"></div>
+        </div>
+
+    </div>
+
+    <script>
+        // Variables globales
+        let materiaux = [];
+        let clients = [];
+        let section = 'nouvelle';
+        let clientEnModif = null;
+
+        // Initialiser
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('date').value = new Date().toISOString().split('T')[0];
+            chargerData();
+            afficher();
+            
+            // Gérer le changement de service pour création
+            document.getElementById('mat-nom').addEventListener('change', function() {
+                const autreInput = document.getElementById('mat-autre');
+                const uniteSelect = document.getElementById('mat-unite');
+                
+                if (this.value === 'AUTRE') {
+                    autreInput.classList.remove('hidden');
+                    autreInput.required = true;
+                } else {
+                    autreInput.classList.add('hidden');
+                    autreInput.required = false;
+                    autreInput.value = '';
+                }
+                
+                // Adapter les unités selon le service
+                updateUniteOptions(this.value, uniteSelect);
+            });
+        });
+
+        // Fonction pour mettre à jour les options d'unité selon le service
+        function updateUniteOptions(service, uniteSelect) {
+            // Vider les options existantes
+            uniteSelect.innerHTML = '';
+            
+            let options = [];
+            
+            switch(service) {
+                case 'Tonte Gazon':
+                case 'Débrousaillage':
+                case 'Taille':
+                    options = ['passage', 'heure', 'euro HT'];
+                    break;
+                case 'Désherbant':
+                    options = ['passage', 'unité'];
+                    break;
+                case 'Gyrobroyage':
+                    options = ['passage', 'heure', 'euro HT'];
+                    break;
+                case 'Elaguage':
+                    options = ['forfait', 'heure'];
+                    break;
+                case 'Nettoyage massifs':
+                    options = ['passage', 'heure'];
+                    break;
+                default:
+                    options = ['passage', 'heure', 'forfait', 'euro HT', 'unité'];
+                    break;
+            }
+            
+            // Ajouter les options
+            options.forEach(option => {
+                const optionElement = document.createElement('option');
+                optionElement.value = option;
+                optionElement.textContent = option;
+                uniteSelect.appendChild(optionElement);
+            });
+        }
+
+        // Afficher la bonne section
+        function afficher() {
+            document.getElementById('page-nouvelle').classList.add('hidden');
+            document.getElementById('page-clients').classList.add('hidden');
+            document.getElementById('page-modification').classList.add('hidden');
+            document.getElementById('page-detail').classList.add('hidden');
+            
+            document.getElementById('page-' + section).classList.remove('hidden');
+            
+            if (section === 'clients') {
+                afficherClients();
+            } else if (section === 'modification') {
+                // Gérer le changement de service pour modification
+                document.getElementById('modif-mat-nom').addEventListener('change', function() {
+                    const autreInput = document.getElementById('modif-mat-autre');
+                    const uniteSelect = document.getElementById('modif-mat-unite');
+                    
+                    if (this.value === 'AUTRE') {
+                        autreInput.classList.remove('hidden');
+                        autreInput.required = true;
+                    } else {
+                        autreInput.classList.add('hidden');
+                        autreInput.required = false;
+                        autreInput.value = '';
+                    }
+                    
+                    // Adapter les unités selon le service
+                    updateUniteOptions(this.value, uniteSelect);
+                });
+            }
+            
+            document.getElementById('count').textContent = clients.length;
+        }
+
+        // Modifier un client
+        function modifierClient(id) {
+            clientEnModif = clients.find(c => c.id === id);
+            if (!clientEnModif) return;
+            
+            document.getElementById('client-nom-modif').textContent = clientEnModif.nom;
+            afficherMatModif();
+            
+            section = 'modification';
+            afficher();
+        }
+
+        // Ajouter service en modification
+        function ajouterMatModif() {
+            const nomSelect = document.getElementById('modif-mat-nom').value;
+            const nomAutre = document.getElementById('modif-mat-autre').value;
+            const qte = parseFloat(document.getElementById('modif-mat-qte').value);
+            const unite = document.getElementById('modif-mat-unite').value;
+            const note = document.getElementById('modif-mat-note').value;
+            
+            let nom;
+            if (nomSelect === 'AUTRE') {
+                if (!nomAutre.trim()) {
+                    alert('Veuillez saisir le nom du service');
+                    return;
+                }
+                nom = nomAutre.trim();
+            } else {
+                if (!nomSelect) {
+                    alert('Veuillez choisir un service');
+                    return;
+                }
+                nom = nomSelect;
+            }
+            
+            if (!qte || qte <= 0) {
+                alert('Veuillez saisir une quantité valide');
+                return;
+            }
+            
+            // Supprimer ancien si existe
+            clientEnModif.materiaux = clientEnModif.materiaux.filter(m => m.nom !== nom);
+            
+            // Ajouter nouveau
+            clientEnModif.materiaux.push({
+                nom: nom,
+                qte: qte,
+                unite: unite,
+                note: note
+            });
+            
+            afficherMatModif();
+            
+            // Vider formulaire
+            document.getElementById('modif-mat-nom').value = '';
+            document.getElementById('modif-mat-autre').value = '';
+            document.getElementById('modif-mat-autre').classList.add('hidden');
+            document.getElementById('modif-mat-qte').value = '';
+            document.getElementById('modif-mat-note').value = '';
+        }
+
+        // Afficher services en modification
+        function afficherMatModif() {
+            const div = document.getElementById('liste-mat-modif');
+            if (clientEnModif.materiaux.length === 0) {
+                div.innerHTML = '<p class="text-gray-500">Aucun service</p>';
+                return;
+            }
+            
+            let html = '';
+            clientEnModif.materiaux.forEach((m, i) => {
+                html += `
+                    <div class="flex justify-between items-center p-3 border rounded mb-2 bg-gray-50">
+                        <div>
+                            <strong>${m.nom}</strong> - ${m.qte} ${m.unite}
+                            ${m.note ? '<br><span class="text-sm text-gray-600">' + m.note + '</span>' : ''}
+                        </div>
+                        <button onclick="supprimerMatModif(${i})" class="bg-red-500 text-white px-2 py-1 rounded text-sm">×</button>
+                    </div>
+                `;
+            });
+            div.innerHTML = html;
+        }
+
+        function supprimerMatModif(i) {
+            clientEnModif.materiaux.splice(i, 1);
+            afficherMatModif();
+        }
+
+        // Sauvegarder les modifications
+        function sauverModifications() {
+            const index = clients.findIndex(c => c.id === clientEnModif.id);
+            if (index !== -1) {
+                clients[index] = clientEnModif;
+                sauverData();
+                alert('Modifications sauvegardées');
+                section = 'clients';
+                afficher();
+            }
+        }
+
+        // Ajouter service
+        function ajouterMat() {
+            const nomSelect = document.getElementById('mat-nom').value;
+            const nomAutre = document.getElementById('mat-autre').value;
+            const qte = parseFloat(document.getElementById('mat-qte').value);
+            const unite = document.getElementById('mat-unite').value;
+            const note = document.getElementById('mat-note').value;
+            
+            let nom;
+            if (nomSelect === 'AUTRE') {
+                if (!nomAutre.trim()) {
+                    alert('Veuillez saisir le nom du service');
+                    return;
+                }
+                nom = nomAutre.trim();
+            } else {
+                if (!nomSelect) {
+                    alert('Veuillez choisir un service');
+                    return;
+                }
+                nom = nomSelect;
+            }
+            
+            if (!qte || qte <= 0) {
+                alert('Veuillez saisir une quantité valide');
+                return;
+            }
+            
+            // Supprimer ancien si existe
+            materiaux = materiaux.filter(m => m.nom !== nom);
+            
+            // Ajouter nouveau
+            materiaux.push({
+                nom: nom,
+                qte: qte,
+                unite: unite,
+                note: note
+            });
+            
+            afficherMat();
+            
+            // Vider formulaire
+            document.getElementById('mat-nom').value = '';
+            document.getElementById('mat-autre').value = '';
+            document.getElementById('mat-autre').classList.add('hidden');
+            document.getElementById('mat-qte').value = '';
+            document.getElementById('mat-note').value = '';
+        }
+
+        // Afficher services
+        function afficherMat() {
+            const div = document.getElementById('liste-mat');
+            if (materiaux.length === 0) {
+                div.innerHTML = '<p class="text-gray-500">Aucun service ajouté</p>';
+                return;
+            }
+            
+            let html = '';
+            materiaux.forEach((m, i) => {
+                html += `
+                    <div class="flex justify-between items-center p-3 border rounded mb-2 bg-gray-50">
+                        <div>
+                            <strong>${m.nom}</strong> - ${m.qte} ${m.unite}
+                            ${m.note ? '<br><span class="text-sm text-gray-600">' + m.note + '</span>' : ''}
+                        </div>
+                        <button onclick="supprimerMat(${i})" class="bg-red-500 text-white px-2 py-1 rounded text-sm">×</button>
+                    </div>
+                `;
+            });
+            div.innerHTML = html;
+        }
+
+        function supprimerMat(i) {
+            materiaux.splice(i, 1);
+            afficherMat();
+        }
+
+        // Sauvegarder client
+        function sauver() {
+            const nom = document.getElementById('nom').value.trim();
+            if (!nom) {
+                alert('Nom client requis');
+                return;
+            }
+            if (materiaux.length === 0) {
+                alert('Au moins un service requis');
+                return;
+            }
+            
+            const client = {
+                id: Date.now(),
+                nom: nom,
+                tel: document.getElementById('tel').value,
+                email: document.getElementById('email').value,
+                date: document.getElementById('date').value,
+                adresse: document.getElementById('adresse').value,
+                materiaux: JSON.parse(JSON.stringify(materiaux)),
+                dateCreation: new Date().toLocaleString('fr-FR')
+            };
+            
+            clients.push(client);
+            sauverData();
+            
+            alert('Client ' + nom + ' enregistré !');
+            
+            // Reset
+            document.getElementById('nom').value = '';
+            document.getElementById('tel').value = '';
+            document.getElementById('email').value = '';
+            document.getElementById('adresse').value = '';
+            document.getElementById('date').value = new Date().toISOString().split('T')[0];
+            materiaux = [];
+            afficherMat();
+            
+            // Aller aux clients
+            section = 'clients';
+            afficher();
+        }
+
+        // Afficher clients
+        function afficherClients() {
+            const div = document.getElementById('liste-clients');
+            
+            if (clients.length === 0) {
+                div.innerHTML = '<p class="text-center text-gray-500 py-8">Aucun client enregistré</p>';
+                return;
+            }
+            
+            let html = '';
+            clients.forEach(client => {
+                html += `
+                    <div class="bg-white rounded-lg shadow p-4 mb-4">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h3 class="font-bold text-lg">${client.nom}</h3>
+                                <p class="text-gray-600">Date: ${client.date}</p>
+                                <p class="text-gray-600">${client.materiaux.length} services</p>
+                                <p class="text-xs text-gray-500">Créé le ${client.dateCreation}</p>
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="voirClient(${client.id})" class="bg-blue-600 text-white px-3 py-1 rounded text-sm">Voir</button>
+                                <button onclick="modifierClient(${client.id})" class="bg-orange-600 text-white px-3 py-1 rounded text-sm">Modifier</button>
+                                <button onclick="supprimerClient(${client.id})" class="bg-red-600 text-white px-3 py-1 rounded text-sm">Suppr</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            div.innerHTML = html;
+        }
+
+        function voirClient(id) {
+            const client = clients.find(c => c.id === id);
+            if (!client) return;
+            
+            let html = `
+                <div class="text-center mb-6">
+                    <h1 class="text-2xl font-bold">FICHE CLIENT</h1>
+                    <p class="text-gray-600">Albizia Entretien</p>
+                </div>
+                
+                <div class="mb-6 p-4 border rounded">
+                    <h2 class="font-bold text-lg mb-2">Informations Client</h2>
+                    <p><strong>Nom:</strong> ${client.nom}</p>
+                    <p><strong>Date:</strong> ${client.date}</p>
+                    ${client.tel ? '<p><strong>Téléphone:</strong> ' + client.tel + '</p>' : ''}
+                    ${client.email ? '<p><strong>Email:</strong> ' + client.email + '</p>' : ''}
+                    ${client.adresse ? '<p><strong>Adresse:</strong> ' + client.adresse + '</p>' : ''}
+                </div>
+                
+                <div>
+                    <h2 class="font-bold text-lg mb-2">Services</h2>
+                    <table class="w-full border">
+                        <thead>
+                            <tr class="bg-gray-100">
+                                <th class="border p-2 text-left">Service</th>
+                                <th class="border p-2 text-left">Quantité</th>
+                                <th class="border p-2 text-left">Unité</th>
+                                <th class="border p-2 text-left">Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+            
+            client.materiaux.forEach(m => {
+                html += `
+                    <tr>
+                        <td class="border p-2">${m.nom}</td>
+                        <td class="border p-2">${m.qte}</td>
+                        <td class="border p-2">${m.unite}</td>
+                        <td class="border p-2">${m.note || '-'}</td>
+                    </tr>
+                `;
+            });
+            
+            html += '</tbody></table></div>';
+            
+            document.getElementById('detail-contenu').innerHTML = html;
+            section = 'detail';
+            afficher();
+        }
+
+        function supprimerClient(id) {
+            clients = clients.filter(c => c.id != id);
+            sauverData();
+            afficher();
+            alert('Client supprimé');
+        }
+
+        // Sauvegarde
+        function sauverData() {
+            try {
+                localStorage.setItem('albizia_entretien_data', JSON.stringify(clients));
+            } catch (e) {
+                alert('Erreur sauvegarde');
+            }
+        }
+
+        function chargerData() {
+            try {
+                const data = localStorage.getItem('albizia_entretien_data');
+                if (data) {
+                    clients = JSON.parse(data);
+                }
+            } catch (e) {
+                clients = [];
+            }
+        }
+    </script>
+</body>
+</html>
